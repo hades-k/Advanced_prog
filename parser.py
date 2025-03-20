@@ -2,6 +2,12 @@ import pandas as pd
 from Bio import SeqIO
 
 def parser (file:str, format:str = 'fasta'):
+    '''
+    :param file: filepath for the file to be parsed
+    :param format: format of the file to be parsed, supports 30+ formats (from SeqIO), defaults to fasta
+    :return: a pandas dataframe containing the parsed sequences for future analysis
+    '''
+
     try:
         with open(file) as f:
             pass
@@ -18,7 +24,6 @@ def parser (file:str, format:str = 'fasta'):
         for key, value in record.__dict__.items():
             if key not in data:
                 data[key] = []
-            # Convert Bio.Seq objects to strings
             if hasattr(value, '_data'):
                 value = str(value)
             data[key].append(value)
