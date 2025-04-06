@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DNA Analysis</title>
+    <style>
+        .sequence {
+            font-family: monospace;
+            word-wrap: break-word;
+        }
+        .hidden {
+            display: none;
+        }
+        .explanation {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>DNA Analysis Tool</h1>
+
+    <!-- File Upload -->
+    <div>
+        <h2>Upload FASTA File</h2>
+        <form id="uploadForm">
+            <input type="file" id="fastaFile" accept=".fasta,.fa">
+            <button type="submit">Upload</button>
+        </form>
+    </div>
+
+    <!-- Results Section (hidden initially) -->
+    <div id="results" class="hidden">
+        <h2>Analysis</h2>
+        
+        <!-- Sequence Selection -->
+        <div>
+            <h3>Select Sequence</h3>
+            <select id="sequenceSelect">
+                <option value="">Choose a sequence...</option>
+            </select>
+            
+            <!-- Sequence Info -->
+            <div id="sequenceInfo" class="hidden">
+                <h4>Sequence Details</h4>
+                <p id="seqDescription"></p>
+                <p>Length: <span id="seqLength"></span> bp</p>
+                <p>GC Content: <span id="seqGC"></span>%</p>
+                <div class="sequence" id="seqData"></div>
+            </div>
+        </div>
+
+        <!-- Motif Search -->
+        <div>
+            <h3>Motif Search</h3>
+            <input type="text" id="motif" placeholder="Enter motif sequence">
+            <button onclick="searchMotif()">Search</button>
+            <div id="motifResults"></div>
+        </div>
+
+        <!-- Alignment -->
+        <div>
+            <h3>Sequence Alignment</h3>
+            <select id="seq1">
+                <option value="">Select first sequence</option>
+            </select>
+            <select id="seq2">
+                <option value="">Select second sequence</option>
+            </select>
+            <br><br>
+            <select id="alignType">
+                <option value="global">Global Alignment</option>
+                <option value="local">Local Alignment</option>
+            </select>
+            <div class="explanation">
+                Global: Align entire sequences from end to end<br>
+                Local: Find best matching regions
+            </div>
+            <br>
+            <div>
+                <label>Gap Penalty:</label>
+                <input type="number" id="gapPenalty" value="-2">
+                <div class="explanation">
+                    Negative number. Lower values allow more gaps.
+                </div>
+            </div>
+            <div>
+                <label>Match Score:</label>
+                <input type="number" id="matchScore" value="1">
+                <div class="explanation">
+                    Positive number. Higher values favor matching nucleotides.
+                </div>
+            </div>
+            <div>
+                <label>Mismatch Penalty:</label>
+                <input type="number" id="mismatchPenalty" value="-1">
+                <div class="explanation">
+                    Negative number. Lower values penalize mismatches more.
+                </div>
+            </div>
+            <br>
+            <button onclick="alignSequences()">Align</button>
+            <div id="alignmentResult" class="sequence"></div>
+        </div>
+    </div>
+
+    <script>
+        let sequences = [];
+
+        document.getElementById('uploadForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('file', document.getElementById('fastaFile').files[0]);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                sequences = data.sequences;
+                updateSequenceDropdowns();
+                document.getElementById('results').classList.remove('hidden');
+            } catch (error) {
+                alert('Error uploading file: ' + error);
+            }
+        };
+
+        function updateSequenceDropdowns() {
+            const dropdowns = ['sequenceSelect', 'seq1', 'seq2'];
+            const options = '<option value="">Choose a sequence...</option>' + 
+                sequences.map(seq => `<option value="${seq.id}">${seq.id}</option>`).join('');
+            
+            dropdowns.forEach(id => {
+                document.getElementById(id).innerHTML = options;
+            });
+        }
+
+        document.getElementById('sequenceSelect').onchange = function() {
+            const seqId = this.value;
+            if (!seqId) {
+                document.getElementById('sequenceInfo').classList.add('hidden');
+                return;
+            }
+
+            const seq = sequences.find(s => s.id === seqId);
+            document.getElementById('seqDescription').textContent = seq.description;
+            document.getElementById('seqLength').textContent = seq.length;
+            document.getElementById('seqGC').textContent = seq.gc_content.toFixed(2);
+            document.getElementById('seqData').textContent = seq.sequence;
+            document.getElementById('sequenceInfo').classList.remove('hidden');
+        };
+
+        async function alignSequences() {
+            const seq1Id = document.getElementById('seq1').value;
+            const seq2Id = document.getElementById('seq2').value;
+            
+            if (!seq1Id || !seq2Id) {
+                alert('Please select two sequences');
+                return;
+            }
+
+            const seq1 = sequences.find(s => s.id === seq1Id);
+            const seq2 = sequences.find(s => s.id === seq2Id);
+
+            try {
+                const response = await fetch('/align', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        seq1: seq1.sequence,
+                        seq2: seq2.sequence,
+                        algo: document.getElementById('alignType').value,
+                        gap: document.getElementById('gapPenalty').value,
+                        match: document.getElementById('matchScore').value,
+                        mismatch: document.getElementById('mismatchPenalty').value
+                    })
+                });
+
+                const result = await response.json();
+                document.getElementById('alignmentResult').innerHTML = 
+                    `Score: ${result.score}<br><br>` +
+                    `${seq1Id}:<br>${result.seq1}<br><br>` +
+                    `${result.comparison}<br><br>` +
+                    `${seq2Id}:<br>${result.seq2}`;
+            } catch (error) {
+                alert('Error performing alignment: ' + error);
+            }
+        }
+
+        async function searchMotif() {
+            const seqId = document.getElementById('sequenceSelect').value;
+            if (!seqId) {
+                alert('Please select a sequence first');
+                return;
+            }
+
+            const motif = document.getElementById('motif').value;
+            if (!motif) {
+                alert('Please enter a motif sequence');
+                return;
+            }
+
+            const seq = sequences.find(s => s.id === seqId);
+            try {
+                const response = await fetch('/search_motif', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        sequence: seq.sequence,
+                        motif: motif
+                    })
+                });
+
+                const result = await response.json();
+                document.getElementById('motifResults').innerHTML = 
+                    `Found ${result.count} occurrences at positions: ${result.positions.join(', ')}`;
+            } catch (error) {
+                alert('Error searching motif: ' + error);
+            }
+        }
+    </script>
+</body>
+</html> 
