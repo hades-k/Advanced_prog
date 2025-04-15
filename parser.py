@@ -36,4 +36,4 @@ def parser (file:str, format:str = 'fasta'):
         output['length'] = output['seq'].str.len()
     return output
 
-parser('synthetic_mtDNA_dataset.fasta', 'fasta').to_csv('out.csv')
+#parser('synthetic_mtDNA_dataset.fasta', 'fasta').to_csv('out.csv')
