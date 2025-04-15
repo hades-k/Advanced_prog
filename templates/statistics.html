@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FASTA Sequence Statistics</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="text-center">FASTA Sequence Statistics</h1>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="fasta_file" class="form-label">Upload FASTA File</label>
+                <input type="file" class="form-control" id="fasta_file" name="fasta_file">
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        {% if error_message %}
+        <div class="alert alert-danger mt-3">{{ error_message }}</div>
+        {% endif %}
+        {% if stats %}
+        <h2 class="mt-4">Statistics</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Length</th>
+                    <th>GC Content (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats %}
+                <tr>
+                    <td>{{ stat.id }}</td>
+                    <td>{{ stat.length }}</td>
+                    <td>{{ stat.gc_content }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h3>GC Content Pie Chart</h3>
+        <img src="/static/gc_pie_chart.png" alt="GC Content Pie Chart" class="img-fluid">
+        {% if histogram_path %}
+        <h3>GC Content Histogram</h3>
+        <img src="/static/gc_histogram.png" alt="GC Content Histogram" class="img-fluid">
+        {% endif %}
+        {% endif %}
+        <a href="{{ url_for('home') }}" class="btn btn-secondary mt-3">Back to Home</a>
+    </div>
+</body>
+</html>
