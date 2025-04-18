@@ -193,8 +193,8 @@ Total Length: 1069
 
 ```
 .
-├── app.py                 # Flask web application
-├── Part 3.py             # Command line analysis script
+├── app.py                # Flask web application
+├── Part 3.py             # Analysis module
 ├── models.py             # Core DNA analysis classes
 ├── parser.py             # FASTA file parsing
 ├── global_alignment_algo.py  # Global sequence alignment
