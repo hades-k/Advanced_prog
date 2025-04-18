@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reference Genome Comparison</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">Reference Genome Comparison</h1>
+
+        {% if error_message %}
+        <div class="alert alert-danger">{{ error_message }}</div>
+        {% endif %}
+
+        <!-- Form 1: Upload FASTA File -->
+        <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
+            <div class="mb-3">
+                <label for="fasta_file" class="form-label">Upload FASTA File</label>
+                <input type="file" class="form-control" id="fasta_file" name="fasta_file" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Load Genomes</button>
+        </form>
+
+        <!-- Form 2: Select Reference Genome -->
+        {% if genomes and genomes|length > 0 %}
+        <form method="POST" class="card p-4 shadow-sm mt-4">
+            <div class="mb-3">
+                <label for="reference_id" class="form-label">Select Reference Genome</label>
+                <select class="form-select" id="reference_id" name="reference_id" required>
+                    {% for genome in genomes %}
+                    <option value="{{ genome.ID }}" {% if genome.ID == reference_id %}selected{% endif %}>
+                        {{ genome.ID }} - {{ genome.description }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Compare</button>
+        </form>
+        {% endif %}
+
+        <!-- Results Table -->
+        {% if results %}
+        <h2 class="mt-4">Comparison Results</h2>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Genome ID</th>
+                        <th>Alignment Score</th>
+                        <th>Similarity (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result.id }}</td>
+                        <td>{{ result.score }}</td>
+                        <td>{{ result.similarity }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <a href="{{ url_for('home') }}" class="btn btn-secondary mt-4 w-100">Back to Home</a>
+    </div>
+</body>
+</html>

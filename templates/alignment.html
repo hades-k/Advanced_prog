@@ -8,8 +8,8 @@
 </head>
 <body>
     <div class="container mt-4">
-        <h1 class="text-center">Sequence Alignment</h1>
-        <form method="POST" enctype="multipart/form-data">
+        <h1 class="text-center mb-4">Sequence Alignment</h1>
+        <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
             <div class="mb-3">
                 <label for="fasta_file" class="form-label">Upload FASTA File</label>
                 <input type="file" class="form-control" id="fasta_file" name="fasta_file">
@@ -41,16 +41,19 @@
                     <option value="local">Local Alignment</option>
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary">Align</button>
+            <button type="submit" class="btn btn-primary w-100">Align</button>
         </form>
+
         {% if error_message %}
         <div class="alert alert-danger mt-3">{{ error_message }}</div>
         {% endif %}
+
         {% if alignment %}
         <h2 class="mt-4">Alignment Result</h2>
-        <pre>{{ alignment }}</pre>
+        <pre class="p-3 bg-light border rounded">{{ alignment }}</pre>
         {% endif %}
-        <a href="{{ url_for('home') }}" class="btn btn-secondary mt-3">Back to Home</a>
+
+        <a href="{{ url_for('home') }}" class="btn btn-secondary mt-4 w-100">Back to Home</a>
     </div>
 </body>
 </html>

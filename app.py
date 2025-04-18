@@ -1,13 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for
-from Bio import SeqIO
+from flask import Flask, render_template, request
+from part3 import load_genomes, align_genomes, find_motifs, compare_to_reference, visualize_differences_bar
 import os
 import matplotlib.pyplot as plt
-from models import SequenceAlignment
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 STATIC_FOLDER = 'static'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['STATIC_FOLDER'] = STATIC_FOLDER
 
 # Ensure necessary folders exist
 if not os.path.exists(UPLOAD_FOLDER):
@@ -15,90 +15,129 @@ if not os.path.exists(UPLOAD_FOLDER):
 if not os.path.exists(STATIC_FOLDER):
     os.makedirs(STATIC_FOLDER)
 
-# Global variables to store data
-records_cache = []  # Store parsed records temporarily
-all_stats = []  # Store cumulative statistics for all uploaded files
-file_labels = []  # Store file labels corresponding to sequences
-all_motif_results = []  # Store all motif search results
+# Global variable to store genomes
+genomes = []
 
-# Utility functions
-def parse_fasta(filepath):
-    """
-    Parse a FASTA file and return a dictionary of sequences.
-    :param filepath: Path to the FASTA file.
-    :return: Dictionary with sequence IDs as keys and descriptions/sequences as values.
-    """
-    records = SeqIO.parse(filepath, "fasta")
-    parsed_data = {}
-    for rec in records:
-        parsed_data[rec.id] = {
-            "description": rec.description,
-            "sequence": str(rec.seq)
-        }
-    return parsed_data
+@app.route('/')
+def home():
+    """Home page with navigation."""
+    return render_template('home.html')
 
-def get_stats(parsed_data):
-    """
-    Calculate statistics for each sequence in the parsed FASTA data.
-    :param parsed_data: Dictionary of parsed FASTA data.
-    :return: List of dictionaries containing statistics for each sequence.
-    """
-    stats = []
-    for seq_id, data in parsed_data.items():
-        seq = data["sequence"]
-        gc = 100 * (seq.count("G") + seq.count("C")) / len(seq)
-        stats.append({
-            "id": seq_id,
-            "description": data["description"],
-            "length": len(seq),
-            "gc_content": round(gc, 2)
-        })
-    return stats
+@app.route('/compare', methods=['GET', 'POST'])
+def compare_genomes():
+    """Compare two genomes."""
+    global genomes
+    comparison_result = None
+    summary = None
+    error_message = None
 
-def find_motifs(parsed_data, motif):
-    """
-    Search for a motif in each sequence and return results.
-    :param parsed_data: Dictionary of parsed FASTA data.
-    :param motif: Motif to search for.
-    :return: List of dictionaries containing motif search results for each sequence.
-    """
-    results = []
-    for seq_id, data in parsed_data.items():
-        seq = data["sequence"]
-        positions = [i for i in range(len(seq)) if seq.startswith(motif, i)]
-        results.append({
-            "id": seq_id,
-            "description": data["description"],
-            "motif": motif,
-            "count": len(positions),
-            "positions": positions
-        })
-    return results
+    if request.method == 'POST':
+        # Handle file upload
+        file = request.files.get('fasta_file')
+        if file and file.filename.endswith(('.fasta', '.fa')):
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            file.save(filepath)
+            genomes = load_genomes(filepath)  # Use the function from part3.py
+        else:
+            error_message = "Invalid file format. Please upload a FASTA file."
 
-def align_sequences(parsed_data, id1, id2, gap_pen=-2, match=1, mismatch=-1, algo="global"):
-    """
-    Align two sequences by their IDs using the SequenceAlignment class.
-    :param parsed_data: Dictionary of parsed FASTA data.
-    :param id1: ID of the first sequence.
-    :param id2: ID of the second sequence.
-    :param gap_pen: Gap penalty for alignment.
-    :param match: Match score for alignment.
-    :param mismatch: Mismatch penalty for alignment.
-    :param algo: Alignment algorithm ("global" or "local").
-    :return: Formatted alignment result as a string.
-    """
-    seq1 = parsed_data[id1]["sequence"]
-    seq2 = parsed_data[id2]["sequence"]
-    alignment = SequenceAlignment(seq1, seq2)
-    seq1_gapped, comparison, seq2_gapped = alignment.align_sequences(gap_pen, match, mismatch, algo)
-    score = alignment.get_alignment_scores(gap_pen, match, mismatch, algo)
-    formatted_alignment = (
-        f"{seq1_gapped}\n"
-        f"{comparison}\n"
-        f"{seq2_gapped}\n"
-        f"Alignment Score: {score}"
+        # Perform genome comparison if IDs are provided
+        id1 = request.form.get('id1')
+        id2 = request.form.get('id2')
+        if id1 and id2 and genomes:
+            g1 = next((g for g in genomes if g.ID == id1), None)
+            g2 = next((g for g in genomes if g.ID == id2), None)
+
+            if g1 and g2:
+                # Align genomes and generate comparison result
+                aligned_seq1, comparison_line, aligned_seq2 = align_genomes(g1, g2)  # Use the function from part3.py
+                comparison_result = [
+                    {"block1": aligned_seq1, "comp_line": comparison_line, "block2": aligned_seq2}
+                ]
+                # Generate summary statistics
+                matches = comparison_line.count('|')
+                mismatches = comparison_line.count('*')
+                gaps = aligned_seq1.count('-') + aligned_seq2.count('-')
+                total = len(comparison_line)
+                summary = {
+                    "matches": matches,
+                    "mismatches": mismatches,
+                    "gaps": gaps,
+                    "total": total
+                }
+
+    return render_template('compare.html', genomes=genomes, comparison_result=comparison_result, summary=summary, error_message=error_message)
+
+@app.route('/motif_search', methods=['GET', 'POST'])
+def motif_search():
+    """Find conserved motifs and specific motif positions."""
+    global genomes
+    motifs = []  # Initialize motifs as an empty list
+    conservation_matrix = None
+    motif_results = []
+    specific_motif = None  # Initialize specific_motif to avoid UnboundLocalError
+    error_message = None
+
+    if request.method == 'POST':
+        # Handle file upload
+        file = request.files.get('fasta_file')
+        if file and file.filename.endswith(('.fasta', '.fa')):
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            file.save(filepath)
+            genomes = load_genomes(filepath)  # Use the function from part3.py
+        else:
+            error_message = "Invalid file format. Please upload a FASTA file."
+
+        # Perform conserved motif search
+        motifs_input = request.form.get('motifs')  # User provides motifs as a comma-separated string
+        if motifs_input:
+            motifs = motifs_input.split(',')
+            conservation_matrix = find_conserved_motifs(genomes, motifs)  # Use the function from part3.py
+
+        # Perform specific motif search
+        specific_motif = request.form.get('specific_motif')  # User provides a single motif
+        if specific_motif and genomes:
+            motif_results = find_motifs(genomes, specific_motif)  # Use the function from part3.py
+
+    return render_template(
+        'motif_search.html',
+        genomes=genomes,
+        motifs=motifs,
+        conservation_matrix=conservation_matrix,
+        specific_motif=specific_motif,
+        motif_results=motif_results,
+        error_message=error_message
     )
-    return formatted_alignment
+
+@app.route('/reference', methods=['GET', 'POST'])
+def reference_genome():
+    """Compare genomes to a reference genome."""
+    global genomes
+    results = None
+    reference_id = None
+    error_message = None
+
+    if request.method == 'POST':
+        # Handle file upload
+        if 'fasta_file' in request.files:
+            file = request.files.get('fasta_file')
+            if file and file.filename.endswith(('.fasta', '.fa')):
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+                file.save(filepath)
+                genomes = load_genomes(filepath)  # Use the function from part3.py
+            else:
+                error_message = "Invalid file format. Please upload a FASTA file."
+
+        # Handle reference genome selection
+        reference_id = request.form.get('reference_id')
+        if reference_id and genomes:
+            reference = next((g for g in genomes if g.ID == reference_id), None)
+            if reference:
+                results = compare_to_reference(reference, [g for g in genomes if g.ID != reference_id])  # Use the function from part3.py
+            else:
+                error_message = f"Reference genome with ID '{reference_id}' not found."
+
+    return render_template('reference.html', genomes=genomes, results=results, reference_id=reference_id, error_message=error_message)
 
 def plot_gc(stats):
     """
@@ -123,84 +162,82 @@ def plot_gc(stats):
     plt.xticks(rotation=45, ha="right")
     plt.tight_layout()
 
-    plot_path = f'static/gc_histogram.png'
+    plot_path = os.path.join(app.config['STATIC_FOLDER'], 'gc_histogram.png')
     plt.savefig(plot_path)
     plt.close()
     return plot_path
 
-@app.route('/')
-def home():
-    """Home page with buttons for different functionalities."""
-    return render_template('home.html')
-
 @app.route('/statistics', methods=['GET', 'POST'])
-def statistics():
+def genome_statistics():
     """Page for viewing FASTA sequence statistics."""
-    global records_cache, all_stats
+    global genomes
     stats = []
     error_message = None
-    histogram_path = None
+    gc_bar_chart_path = None
+    gc_pie_chart_path = None
+    gc_species_histogram_path = None
 
     if request.method == 'POST':
+        # Handle file upload
         file = request.files.get('fasta_file')
-        if file:
-            if not file.filename.endswith(('.fasta', '.fa')):
-                error_message = "Invalid file format. Please upload a FASTA file."
-            else:
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-                file.save(filepath)
-                records_cache = parse_fasta(filepath)
-                stats = get_stats(records_cache)
-                all_stats = stats
-                histogram_path = plot_gc(stats)
+        if file and file.filename.endswith(('.fasta', '.fa')):
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            file.save(filepath)
+            genomes = load_genomes(filepath)  # Use the function from part3.py
 
-    return render_template('statistics.html', stats=all_stats, error_message=error_message, histogram_path=histogram_path)
+            # Calculate statistics
+            stats = [
+                {
+                    "id": genome.ID,
+                    "description": genome.description,
+                    "length": len(genome.seq),
+                    "gc_content": round((genome.seq.count('G') + genome.seq.count('C')) / len(genome.seq) * 100, 2)
+                }
+                for genome in genomes
+            ]
 
-@app.route('/alignment', methods=['GET', 'POST'])
-def alignment():
-    """Page for aligning two sequences by their IDs."""
-    global records_cache
-    alignment_result = None
-    error_message = None
+            # Generate GC content bar chart
+            gc_bar_chart_path = plot_gc(stats)
 
-    if request.method == 'POST':
-        file = request.files.get('fasta_file')
-        id1 = request.form.get('id1')
-        id2 = request.form.get('id2')
-        gap_pen = int(request.form.get('gap_pen', -2))
-        match = int(request.form.get('match', 1))
-        mismatch = int(request.form.get('mismatch', -1))
-        algo = request.form.get('algo', 'global')
+            # Generate overall GC content pie chart
+            total_bases = sum(stat["length"] for stat in stats)
+            total_gc_bases = sum((stat["gc_content"] / 100) * stat["length"] for stat in stats)
+            total_at_bases = total_bases - total_gc_bases
+            plt.figure(figsize=(8, 8))
+            plt.pie(
+                [total_gc_bases, total_at_bases],
+                labels=["GC Content", "AT Content"],
+                autopct='%1.1f%%',
+                colors=["orange", "skyblue"],
+                startangle=140
+            )
+            plt.title("Overall GC Content in File")
+            gc_pie_chart_path = os.path.join(app.config['STATIC_FOLDER'], 'gc_pie_chart.png')
+            plt.savefig(gc_pie_chart_path)
+            plt.close()
 
-        if file:
-            if not file.filename.endswith(('.fasta', '.fa')):
-                error_message = "Invalid file format. Please upload a FASTA file."
-            else:
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-                file.save(filepath)
-                records_cache = parse_fasta(filepath)
+            # Generate GC content distribution histogram
+            gc_contents = [stat["gc_content"] for stat in stats]
+            plt.figure(figsize=(10, 6))
+            plt.hist(gc_contents, bins=10, color='teal', edgecolor='black')
+            plt.title("GC Content Distribution Across Species")
+            plt.xlabel("GC Content (%)")
+            plt.ylabel("Frequency")
+            gc_species_histogram_path = os.path.join(app.config['STATIC_FOLDER'], 'gc_species_histogram.png')
+            plt.savefig(gc_species_histogram_path)
+            plt.close()
 
-        if id1 and id2 and records_cache:
-            if id1 in records_cache and id2 in records_cache:
-                alignment_result = align_sequences(records_cache, id1, id2, gap_pen, match, mismatch, algo)
-            else:
-                error_message = "One or both sequence IDs not found in the uploaded file."
+        else:
+            error_message = "Invalid file format. Please upload a FASTA file."
 
-    return render_template('alignment.html', alignment=alignment_result, error_message=error_message)
-
-@app.route('/motif_search', methods=['GET', 'POST'])
-def motif_search():
-    """Page for searching motifs in a FASTA file."""
-    global records_cache
-    motif_results = []  # Clear previous results
-    error_message = None
-
-    if request.method == 'POST':
-        motif = request.form.get('motif')
-        if motif and records_cache:
-            motif_results = find_motifs(records_cache, motif)
-
-    return render_template('motif_search.html', motif_results=motif_results, error_message=error_message)
+    return render_template(
+        'statistics.html',
+        stats=stats,
+        error_message=error_message,
+        gc_bar_chart_path='/static/gc_histogram.png',
+        gc_pie_chart_path='/static/gc_pie_chart.png',
+        gc_species_histogram_path='/static/gc_species_histogram.png'
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
