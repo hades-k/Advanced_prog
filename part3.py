@@ -68,6 +68,7 @@ def find_motifs(genomes, motif):
     :return: List of dictionaries containing motif search results for each genome.
     """
     results = []
+    motif_finder = MotifFinder(motif)  # Create a MotifFinder instance for the given motif
     for genome in genomes:
         positions = motif_finder.search_motif(genome.seq)
         results.append({

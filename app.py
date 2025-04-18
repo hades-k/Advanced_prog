@@ -1,7 +1,10 @@
 from flask import Flask, render_template, request
 from part3 import load_genomes, align_genomes, find_motifs, compare_to_reference, visualize_differences_bar
 import os
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -87,12 +90,6 @@ def motif_search():
             genomes = load_genomes(filepath)  # Use the function from part3.py
         else:
             error_message = "Invalid file format. Please upload a FASTA file."
-
-        # Perform conserved motif search
-        motifs_input = request.form.get('motifs')  # User provides motifs as a comma-separated string
-        if motifs_input:
-            motifs = motifs_input.split(',')
-            conservation_matrix = find_conserved_motifs(genomes, motifs)  # Use the function from part3.py
 
         # Perform specific motif search
         specific_motif = request.form.get('specific_motif')  # User provides a single motif

@@ -75,7 +75,7 @@
         <div class="mt-5">
             <h3 class="text-center">GC Content Distribution Across Species</h3>
             <div class="text-center">
-                <img src="{{ gc_species_histogram_path }}" alt="GC Content Distribution Histogram" class="img-fluid rounded shadow">
+                <img src="{{ url_for('static', filename='gc_species_histogram.png') }}" alt="GC Content Distribution Histogram" class="img-fluid rounded shadow">
             </div>
         </div>
         {% endif %}
