@@ -1,6 +1,6 @@
 # PART 3 of project
 
-from models import SequenceAlignment, MitochondrialDNA, parser
+from models import SequenceAlignment, MitochondrialDNA, parser, MotifFinder
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -69,13 +69,12 @@ def find_motifs(genomes, motif):
     """
     results = []
     for genome in genomes:
-        seq = genome.seq
-        positions = [i for i in range(len(seq)) if seq.startswith(motif, i)]
+        positions = motif_finder.search_motif(genome.seq)
         results.append({
             "id": genome.ID,
             "description": genome.description,
             "motif": motif,
-            "count": len(positions),
+            "count": motif_finder.count_occurrences(genome.seq),
             "positions": positions
         })
     return results
