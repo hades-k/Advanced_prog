@@ -88,10 +88,13 @@ classDiagram
         +integrate_analysis()
     }
     
-    class AnalysisScript {
-        +Part 3.py
-        +run_analysis()
-        +generate_plots()
+    class AnalysisModule {
+        +part3.py
+        +load_genomes()
+        +align_genomes()
+        +find_motifs()
+        +compare_to_reference()
+        +visualize_differences_bar()
     }
     
     MitochondrialDNA --> SequenceAlignment
@@ -100,7 +103,9 @@ classDiagram
     SequenceAlignment --> LocalAlignment
     WebApp --> MitochondrialDNA
     WebApp --> SequenceAlignment
-    WebApp --> AnalysisScript
+    WebApp --> AnalysisModule
+    AnalysisModule --> MotifFinder
+    AnalysisModule --> SequenceAlignment
 ```
 
 ## Installation
@@ -131,13 +136,8 @@ python app.py
    - Perform sequence alignments
    - Search for motifs
    - View visualizations
-   - Run integrated analysis from `Part 3.py`
 
-### Command Line Analysis
-Run the analysis script directly:
-```bash
-python "Part 3"
-```
+Note: The `part3.py` script is designed to be used as part of the web application and should not be run as a standalone command-line tool. All functionality is integrated into the web interface for a better user experience.
 
 ## Examples
 
@@ -216,7 +216,7 @@ Score:
    - FASTA files → Parser → MitochondrialDNA objects
    - MitochondrialDNA → SequenceAlignment for comparisons
    - MitochondrialDNA → MotifFinder for pattern searching
-   - WebApp → AnalysisScript for integrated analysis
+   - WebApp → AnalysisModule for integrated analysis
 
 2. **Analysis Pipeline**:
    - Sequence loading and validation
