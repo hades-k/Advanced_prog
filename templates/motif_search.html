@@ -8,27 +8,30 @@
 </head>
 <body>
     <div class="container mt-4">
-        <h1 class="text-center">Motif Search</h1>
-        <form method="POST" enctype="multipart/form-data">
+        <h1 class="text-center mb-4">Motif Search</h1>
+
+        {% if error_message %}
+        <div class="alert alert-danger">{{ error_message }}</div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
             <div class="mb-3">
                 <label for="fasta_file" class="form-label">Upload FASTA File</label>
-                <input type="file" class="form-control" id="fasta_file" name="fasta_file">
+                <input type="file" class="form-control" id="fasta_file" name="fasta_file" required>
             </div>
             <div class="mb-3">
-                <label for="motif" class="form-label">Enter Motif</label>
-                <input type="text" class="form-control" id="motif" name="motif" placeholder="Enter motif (e.g., ATG)">
+                <label for="specific_motif" class="form-label">Specific Motif</label>
+                <input type="text" class="form-control" id="specific_motif" name="specific_motif" placeholder="e.g., GATC">
             </div>
-            <button type="submit" class="btn btn-primary">Search</button>
+            <button type="submit" class="btn btn-primary w-100">Search</button>
         </form>
-        {% if error_message %}
-        <div class="alert alert-danger mt-3">{{ error_message }}</div>
-        {% endif %}
+
         {% if motif_results %}
-        <h2 class="mt-4">Cumulative Motif Search Results</h2>
-        <table class="table table-bordered">
-            <thead>
+        <h2 class="mt-4">Motif Search Results</h2>
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
                 <tr>
-                    <th>ID</th>
+                    <th>Genome ID</th>
                     <th>Description</th>
                     <th>Motif</th>
                     <th>Count</th>
@@ -42,13 +45,14 @@
                     <td>{{ result.description }}</td>
                     <td>{{ result.motif }}</td>
                     <td>{{ result.count }}</td>
-                    <td>{{ result.positions }}</td>
+                    <td>{{ result.positions | join(', ') }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         {% endif %}
-        <a href="{{ url_for('home') }}" class="btn btn-secondary mt-3">Back to Home</a>
+
+        <a href="{{ url_for('home') }}" class="btn btn-secondary mt-4 w-100">Back to Home</a>
     </div>
 </body>
 </html>

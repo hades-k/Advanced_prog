@@ -8,45 +8,80 @@
 </head>
 <body>
     <div class="container mt-4">
-        <h1 class="text-center">FASTA Sequence Statistics</h1>
-        <form method="POST" enctype="multipart/form-data">
+        <h1 class="text-center mb-4">FASTA Sequence Statistics</h1>
+
+        <!-- File Upload Form -->
+        <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
             <div class="mb-3">
                 <label for="fasta_file" class="form-label">Upload FASTA File</label>
-                <input type="file" class="form-control" id="fasta_file" name="fasta_file">
+                <input type="file" class="form-control" id="fasta_file" name="fasta_file" required>
             </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" class="btn btn-primary w-100">Submit</button>
         </form>
+
+        <!-- Error Message -->
         {% if error_message %}
         <div class="alert alert-danger mt-3">{{ error_message }}</div>
         {% endif %}
+
+        <!-- Statistics Table -->
         {% if stats %}
         <h2 class="mt-4">Statistics</h2>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Length</th>
-                    <th>GC Content (%)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for stat in stats %}
-                <tr>
-                    <td>{{ stat.id }}</td>
-                    <td>{{ stat.length }}</td>
-                    <td>{{ stat.gc_content }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <h3>GC Content Pie Chart</h3>
-        <img src="/static/gc_pie_chart.png" alt="GC Content Pie Chart" class="img-fluid">
-        {% if histogram_path %}
-        <h3>GC Content Histogram</h3>
-        <img src="/static/gc_histogram.png" alt="GC Content Histogram" class="img-fluid">
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Description</th>
+                        <th>Length</th>
+                        <th>GC Content (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in stats %}
+                    <tr>
+                        <td>{{ stat.id }}</td>
+                        <td>{{ stat.description }}</td>
+                        <td>{{ stat.length }}</td>
+                        <td>{{ stat.gc_content }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- GC Content Bar Chart -->
+        {% if gc_bar_chart_path %}
+        <div class="mt-5">
+            <h3 class="text-center">GC Content of Sequences</h3>
+            <div class="text-center">
+                <img src="{{ gc_bar_chart_path }}" alt="GC Content Bar Chart" class="img-fluid rounded shadow">
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Overall GC Content Pie Chart -->
+        {% if gc_pie_chart_path %}
+        <div class="mt-5">
+            <h3 class="text-center">Overall GC Content in File</h3>
+            <div class="text-center">
+                <img src="{{ gc_pie_chart_path }}" alt="Overall GC Content Pie Chart" class="img-fluid rounded shadow">
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- GC Content Distribution Histogram -->
+        {% if gc_species_histogram_path %}
+        <div class="mt-5">
+            <h3 class="text-center">GC Content Distribution Across Species</h3>
+            <div class="text-center">
+                <img src="{{ gc_species_histogram_path }}" alt="GC Content Distribution Histogram" class="img-fluid rounded shadow">
+            </div>
+        </div>
         {% endif %}
         {% endif %}
-        <a href="{{ url_for('home') }}" class="btn btn-secondary mt-3">Back to Home</a>
+
+        <a href="{{ url_for('home') }}" class="btn btn-secondary mt-4 w-100">Back to Home</a>
     </div>
 </body>
 </html>

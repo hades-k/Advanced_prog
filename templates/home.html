@@ -10,9 +10,10 @@
     <div class="container mt-4">
         <h1 class="text-center">Genomic Data Analysis</h1>
         <div class="d-grid gap-3">
-            <a href="{{ url_for('statistics') }}" class="btn btn-primary btn-lg">View Sequence Statistics</a>
+            <a href="{{ url_for('compare_genomes') }}" class="btn btn-primary btn-lg">Compare Genomes</a>
             <a href="{{ url_for('motif_search') }}" class="btn btn-secondary btn-lg">Motif Search</a>
-            <a href="{{ url_for('alignment') }}" class="btn btn-success btn-lg">Sequence Alignment</a>
+            <a href="{{ url_for('reference_genome') }}" class="btn btn-success btn-lg">Reference Genome</a>
+            <a href="{{ url_for('genome_statistics') }}" class="btn btn-info btn-lg">Genome Statistics</a>
         </div>
     </div>
 </body>

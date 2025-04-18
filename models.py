@@ -61,7 +61,7 @@ class SequenceAlignment:
         return score
 
 # Usage example (comment out later)
-
+'''"""
 data = parser('synthetic_mtDNA_dataset.fasta', 'fasta')
 genomes = data[['id', 'seq', 'description']]
 
@@ -81,4 +81,4 @@ comp_10_18 = SequenceAlignment(NC10_DNA.seq, NC18_DNA.seq)
 gaps1, comparison, gaps2 = comp_10_18.align_sequences(gap_pen=-1)
 score = comp_10_18.get_alignment_scores(gap_pen=-1)
 print(f" pairwise global alignment between NC_10 and NC_18 genomes:\n {gaps1}\n {comparison}\n {gaps2}\n alignment score: {score}")
-
+'''
