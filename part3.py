@@ -70,6 +70,7 @@ def find_motifs(genomes, motif):
     results = []
     motif_finder = MotifFinder(motif)  # Create a MotifFinder instance for the given motif
     for genome in genomes:
+        motif_finder = MotifFinder(motif)
         positions = motif_finder.search_motif(genome.seq)
         results.append({
             "id": genome.ID,
