@@ -112,7 +112,7 @@ classDiagram
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/hades-k/mitochondrial-dna-analysis.git
+git clone https://github.com/hades-k/dna-analysis.git
 cd mitochondrial-dna-analysis
 ```
 
