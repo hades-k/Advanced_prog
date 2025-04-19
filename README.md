@@ -20,8 +20,6 @@ This tool provides functionality for:
 - Global and local sequence alignment
 - GC content analysis and visualization
 
-The project integrates a web interface with a command line analysis script, providing both interactive and batch processing capabilities.
-
 ## System Design
 
 ### CRC Cards
@@ -53,7 +51,7 @@ The project integrates a web interface with a command line analysis script, prov
 - **Responsibilities**:
   - Handle user interactions
   - Integrate command line analysis
-- **Collaborators**: MitochondrialDNA, SequenceAlignment, Part3
+- **Collaborators**: MitochondrialDNA, SequenceAlignment, AnalysisModule
 
 ### UML Diagram
 
@@ -113,7 +111,7 @@ classDiagram
 1. Clone the repository:
 ```bash
 git clone https://github.com/hades-k/dna-analysis.git
-cd mitochondrial-dna-analysis
+cd dna-analysis
 ```
 
 2. Install dependencies:
@@ -135,9 +133,7 @@ python app.py
    - View sequence statistics
    - Perform sequence alignments
    - Search for motifs
-   - View visualizations
-
-Note: The `part3.py` script is designed to be used as part of the web application and should not be run as a standalone command-line tool. All functionality is integrated into the web interface for a better user experience.
+   - Visualize results
 
 ## Examples
 
@@ -166,7 +162,7 @@ ATTCTCCAATTGCGCAACATGGGATTTTACGCCGATTCTC
 Sequence ID: NC_000001
 Description: NC_000001 Species_1 mitochondrion, complete genome
 Length: 1000
-GC Content: 48.2
+GC Content: 48.2%
 ```
 
 2. Motif Search:
@@ -180,9 +176,6 @@ Positions: 12, 68, 130, 245, 269, 310, 438, 446, 450, 507, 562, 660, 663, 949
 ```
 Sequence 1 ID: NC_000001
 Sequence 2 ID: NC_000002
-Sequence 1:  CCGGCAGGAACTGCTAACACATA-ATCGGCGTTTTGAAGTTCGCAAGGAGAGTGCCT-TCCGCGTT-CC-CGGCTTCGTA-TCAAG-ATATGGGACAAGGAGGGACTGTGACATTT.....
-Comparison:     ||**|** * **||*|* ** *|*|**|*||*|*****|||||||||*|***|* |*|**|** ** |**||** ** *|*|* **||*****  ||*|||* *|*|||*||*.....
-Sequence 2:  ---TAAGTAA-T-CTTGCGC-TACACCTGCCTGCTCAAGTTTTTCCCACTACTGCTTAGCGGCATTACCTGGGGCTC-TACTGACGTATCAGGGAC--CCAATCA-TATTGTAGGT.....
 Matches: 399
 Mismatches: 532
 Gaps: 138
@@ -263,4 +256,7 @@ Total Length: 1069
 4. **Extensibility**:
    - New analysis methods can be added
    - Support for additional file formats
-   - Custom visualization options
+
+
+### Final note 
+This project was created for the Advanced Programming course at University of Bologna 
