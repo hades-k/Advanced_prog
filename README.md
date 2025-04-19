@@ -30,28 +30,22 @@ This tool provides functionality for:
   - Store DNA sequence data
   - Calculate sequence properties
   - Extract subsequences
-- **Collaborators**: Parser, SequenceAlignment
+- **Collaborators**: none
 
 #### MotifFinder
 - **Class**: MotifFinder
 - **Responsibilities**:
   - Search for patterns in sequences
   - Count motif occurrences
-- **Collaborators**: FMIndexQuery
+- **Collaborators**: MitochondrialDNA
 
 #### SequenceAlignment
 - **Class**: SequenceAlignment
 - **Responsibilities**:
   - Perform sequence alignments
   - Calculate alignment scores
-- **Collaborators**: GlobalAlignment, LocalAlignment
+- **Collaborators**: MitochondrialDNA
 
-#### WebApp
-- **Class**: WebApp
-- **Responsibilities**:
-  - Handle user interactions
-  - Integrate command line analysis
-- **Collaborators**: MitochondrialDNA, SequenceAlignment, AnalysisModule
 
 ### UML Diagram
 
@@ -78,32 +72,10 @@ classDiagram
         +align_sequences()
         +get_alignment_scores()
     }
-    
-    class WebApp {
-        +app.py
-        +handle_uploads()
-        +display_results()
-        +integrate_analysis()
-    }
-    
-    class AnalysisModule {
-        +part3.py
-        +load_genomes()
-        +align_genomes()
-        +find_motifs()
-        +compare_to_reference()
-        +visualize_differences_bar()
-    }
-    
-    MitochondrialDNA --> SequenceAlignment
-    MotifFinder --> FMIndexQuery
-    SequenceAlignment --> GlobalAlignment
-    SequenceAlignment --> LocalAlignment
-    WebApp --> MitochondrialDNA
-    WebApp --> SequenceAlignment
-    WebApp --> AnalysisModule
-    AnalysisModule --> MotifFinder
-    AnalysisModule --> SequenceAlignment
+
+    MotifFinder ..> MitochondrialDNA : uses
+    SequenceAlignment ..> MitochondrialDNA : uses
+
 ```
 
 ## Installation
@@ -221,20 +193,53 @@ Total Length: 1069
    - Provides configurable alignment parameters
    - Returns alignment results and scores
 
+
 ### Component Interactions
+  
+```mermaid
+graph TD
+    subgraph WebInterface
+        Flask[app.py]
+        Templates[templates/]
+        Static[static/]
+    end
 
-1. **Data Flow**:
-   - FASTA files → Parser → MitochondrialDNA objects
-   - MitochondrialDNA → SequenceAlignment for comparisons
-   - MitochondrialDNA → MotifFinder for pattern searching
-   - WebApp → AnalysisModule for integrated analysis
+    subgraph CoreAnalysis
+        Models[models.py]
+        subgraph ModelsClasses
+            MTDNA[MitochondrialDNA]
+            Motif[MotifFinder]
+            Align[SequenceAlignment]
+        end
+    end
 
-2. **Analysis Pipeline**:
-   - Sequence loading and validation
-   - Statistical analysis (GC content, length)
-   - Motif searching
-   - Sequence alignment
-   - Results visualization
+    subgraph FileProcessing
+        Parser[parser.py]
+    end
+
+    subgraph AnalysisAlgorithms
+        Global[global_alignment_algo.py]
+        Local[local_alignment_algo.py]
+        FMIndex[fm_index_query.py]
+    end
+
+    subgraph DataStorage
+        Uploads[uploads/]
+    end
+
+    subgraph AnalysisScript
+        Part3[part3.py]
+    end
+
+   
+    Flask --> Part3
+    Models --> Global
+    Models --> Local
+    Models --> FMIndex
+    Part3 --> Parser
+    Parser --> Uploads
+    Part3 --> Models
+```
 
 ### Final note 
 This project was created for the Advanced Programming course at University of Bologna 
