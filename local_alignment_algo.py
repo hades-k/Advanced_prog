@@ -68,7 +68,6 @@ def localAlignment(A, B, gap_pen, match, mismatch):
                 cM[i].append("LEFT")
     # TRACEBACK
     alignment = traceback(A, B, max_i, max_j, cM)
-    score = sM[m][n]
-    return alignment, score
+    return alignment, max_score
 
 
