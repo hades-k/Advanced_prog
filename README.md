@@ -236,27 +236,5 @@ Total Length: 1069
    - Sequence alignment
    - Results visualization
 
-### Object-Oriented Principles
-
-1. **Encapsulation**:
-   - Each class encapsulates its data and methods
-   - Internal implementation details are hidden
-   - Clear public interfaces
-
-2. **Abstraction**:
-   - High-level sequence manipulation
-   - Simplified analysis interfaces
-   - Clear separation of concerns
-
-3. **Modularity**:
-   - Independent components
-   - Clear interfaces
-   - Easy to extend
-
-4. **Extensibility**:
-   - New analysis methods can be added
-   - Support for additional file formats
-
-
 ### Final note 
 This project was created for the Advanced Programming course at University of Bologna 
